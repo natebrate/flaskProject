@@ -1,0 +1,16 @@
+<html>
+    <head>
+        <title>Flask Project</title>
+        <title>Welcome to Flask</title>
+    </head>
+    <body>
+    {% for task in tasks %}
+        <h1>ID: {{ task.id }}</h1>
+        <p>
+             <b><span>{{ task.title }} </span></b><br>
+                <b>List:</b> <span>{{ task.description }}</span><br>
+            <span>{{ task.done }}</span>
+        </p>
+    {% endfor %}
+    </body>
+</html>
