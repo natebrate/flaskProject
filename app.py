@@ -1,8 +1,25 @@
 from flask import Flask, jsonify, url_for
+from flask_httpauth import HTTPBasicAuth, HTTPDigestAuth
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask import abort, make_response, request
 from flask import render_template
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'this_is_the_secret_key'
+auth = HTTPDigestAuth()
+
+users = {
+    "john": "hello",
+    "susan": "bye"
+}
+
+
+@auth.get_password
+def get_pw(username):
+    if username in users:
+        return users.get(username)
+    return None
+
 
 tasks = [
     {
@@ -22,6 +39,7 @@ tasks = [
 
 @app.route('/')
 @app.route('/index')
+@auth.login_required
 def index():
     tasks = [
         {
@@ -37,7 +55,7 @@ def index():
             'done': False
         }
     ]
-    return render_template('index.html', tasks=tasks)
+    return render_template('index.html' % auth.username(), tasks=tasks)
 
 
 @app.route('/todo/api/v1.0/tasks', methods=['GET'])
