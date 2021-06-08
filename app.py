@@ -1,8 +1,11 @@
 from flask import Flask, jsonify, url_for
-from flask_httpauth import HTTPBasicAuth, HTTPDigestAuth
+from flask_httpauth import HTTPDigestAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import abort, make_response, request
 from flask import render_template
+
+# to run the program use the following line
+# flask run --cert=cert.pem --key=key.pem
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'this_is_the_secret_key'
@@ -55,15 +58,17 @@ def index():
             'done': False
         }
     ]
-    return render_template('index.html' % auth.username(), tasks=tasks)
+    return render_template('index.html', tasks=tasks)
 
 
 @app.route('/todo/api/v1.0/tasks', methods=['GET'])
+@auth.login_required
 def get_task():
     return jsonify({'tasks': tasks})
 
 
 @app.route('/todo/api/v1.0/tasks', methods=['POST'])
+@auth.login_required
 def create_task():
     if not request.json or not 'title' in request.json:
         abort(400)
@@ -78,6 +83,7 @@ def create_task():
 
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['PUT'])
+@auth.login_required
 def update_task(task_id):
     task = [task for task in tasks if task['id'] == task_id]
     if len(task) == 0:
@@ -97,6 +103,7 @@ def update_task(task_id):
 
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['DELETE'])
+@auth.login_required
 def delete_task(task_id):
     task = [task for task in tasks if task['id'] == task_id]
     if len(task) == 0:
@@ -121,9 +128,15 @@ def make_public_task(task):
 
 
 @app.route('/todo/api/v1.0/tasks', methods=['GET'])
+@auth.login_required
 def get_tasks():
     return jsonify({'tasks': [make_public_task(task) for task in tasks]})
 
 
+@auth.error_handler
+def unauthorized():
+    return make_response(jsonify({'error': 'Unauthorized access'}), 403)
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, ssl_context=('cert.pem', 'key.pem'))
